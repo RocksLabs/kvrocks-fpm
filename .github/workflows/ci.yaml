@@ -25,7 +25,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt-get install -y git build-essential cmake libtool python3 libsystemd-dev
+          sudo apt-get install -y git build-essential cmake libtool python3 libssl-dev libsystemd-dev
 
       - name: Set env variables
         run: |
@@ -36,7 +36,7 @@ jobs:
         run: |
           git clone -b v$VERSION https://github.com/apache/kvrocks
           cd kvrocks
-          ./x.py build -DPORTABLE=1 -DCMAKE_BUILD_TYPE=Release -j $(nproc)
+          ./x.py build -DENABLE_OPENSSL=ON -DPORTABLE=1 -DCMAKE_BUILD_TYPE=Release -j $(nproc)
       
       - name: Make DEB release directory
         run: |
