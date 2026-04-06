@@ -8,8 +8,7 @@ on:
 
 env:
   DEB_FPM_OPTS: >-
-    --prefix '/usr'
-    --config-files /usr/share/kvrocks/kvrocks.conf
+    --config-files /etc/kvrocks/kvrocks.conf
   COMMON_FPM_OPTS: >-
     -s dir -n kvrocks --verbose -a native
     --description 'A distributed key value NoSQL database that uses RocksDB as storage engine and is compatible with Redis protocol'
@@ -26,7 +25,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt-get install -y git build-essential cmake libtool python3
+          sudo apt-get install -y git build-essential cmake libtool python3 libsystemd-dev
 
       - name: Set env variables
         run: |
@@ -41,33 +40,35 @@ jobs:
       
       - name: Make DEB release directory
         run: |
-          mkdir release
-          mkdir release/bin release/share
-          mkdir release/share/kvrocks
-          cp kvrocks/build/kvrocks release/bin/
-          cp kvrocks/build/kvrocks2redis release/bin/
-          cp kvrocks/kvrocks.conf release/share/kvrocks
-          cp -r kvrocks/LICENSE kvrocks/NOTICE kvrocks/licenses release/share/kvrocks
-          cp kvrocks/utils/systemd/kvrocks.service release/share/kvrocks
+          mkdir deb-release
+          mkdir -p deb-release/usr/local/bin
+          mkdir -p deb-release/etc/kvrocks
+          mkdir -p deb-release/usr/share/licenses/kvrocks
+          mkdir -p deb-release/lib/systemd/system
+          cp kvrocks/build/kvrocks deb-release/usr/local/bin/
+          cp kvrocks/build/kvrocks2redis deb-release/usr/local/bin/
+          cp kvrocks/kvrocks.conf deb-release/etc/kvrocks/
+          cp -r kvrocks/LICENSE kvrocks/NOTICE kvrocks/licenses deb-release/usr/share/licenses/kvrocks/
+          cp kvrocks/utils/systemd/kvrocks.service deb-release/lib/systemd/system/
 
       - name: Package DEB
         uses: bpicode/github-action-fpm@v0.9.3
         with:
           fpm_args: '.'
-          fpm_opts: '-t deb -v ${{ env.VERSION }} --iteration ${{ env.ITERATION }} -C release ${{ env.COMMON_FPM_OPTS }} ${{ env.DEB_FPM_OPTS }}'
+          fpm_opts: '-t deb -v ${{ env.VERSION }} --iteration ${{ env.ITERATION }} -C deb-release ${{ env.COMMON_FPM_OPTS }} ${{ env.DEB_FPM_OPTS }}'
       
       - name: Make RPM release directory
         run: |
+          mkdir rpm-release
+          mkdir -p rpm-release/usr/local/bin
           mkdir -p rpm-release/etc/kvrocks
-          mkdir -p rpm-release/usr/bin
-          mkdir -p rpm-release/usr/lib/systemd/system
           mkdir -p rpm-release/usr/share/licenses/kvrocks
-
-          cp kvrocks/build/kvrocks rpm-release/usr/bin/
-          cp kvrocks/build/kvrocks2redis rpm-release/usr/bin/
+          mkdir -p rpm-release/lib/systemd/system
+          cp kvrocks/build/kvrocks rpm-release/usr/local/bin/
+          cp kvrocks/build/kvrocks2redis rpm-release/usr/local/bin/
           cp kvrocks/kvrocks.conf rpm-release/etc/kvrocks/
           cp -r kvrocks/LICENSE kvrocks/NOTICE kvrocks/licenses/* rpm-release/usr/share/licenses/kvrocks/
-          cp kvrocks/utils/systemd/kvrocks.service rpm-release/usr/lib/systemd/system/
+          cp kvrocks/utils/systemd/kvrocks.service rpm-release/lib/systemd/system/
 
       - name: Package RPM
         uses: bpicode/github-action-fpm@v0.9.3
